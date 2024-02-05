@@ -13,12 +13,27 @@ class App extends Component {
   };
 
   componentDidMount() {
+    this.loadContactsFromLocalStorage();
+  }
+
+  componentDidUpdate(_, prevState) {
+    if (prevState.contacts !== this.state.contacts) {
+      this.saveContactsToLocalStorage();
+    }
+  }
+
+  loadContactsFromLocalStorage() {
     const storedContacts = localStorage.getItem(LS_KEY);
-    console.log(storedContacts);
     if (storedContacts) {
       const parsedContacts = JSON.parse(storedContacts);
       this.setState({ contacts: parsedContacts });
     }
+  }
+
+  saveContactsToLocalStorage() {
+    const { contacts } = this.state;
+    const parsedContacts = JSON.stringify(contacts);
+    localStorage.setItem(LS_KEY, parsedContacts);
   }
 
   addContact = ({ name, number }) => {
@@ -28,26 +43,10 @@ class App extends Component {
       number,
     };
 
-    const parsedContacts = JSON.stringify([...this.state.contacts, newContact]);
-    localStorage.setItem(LS_KEY, parsedContacts);
-
     this.setState(({ contacts }) => ({ contacts: [newContact, ...contacts] }));
   };
 
   deleteContact = contactId => {
-    const savedContacts = localStorage.getItem(LS_KEY);
-
-    if (savedContacts) {
-      const parsedContacts = JSON.parse(savedContacts);
-      const indexToRemove = parsedContacts.findIndex(
-        contact => contact.id === contactId
-      );
-      if (indexToRemove !== -1) {
-        parsedContacts.splice(indexToRemove, 1);
-
-        localStorage.setItem(LS_KEY, JSON.stringify(parsedContacts));
-      }
-    }
     this.setState(prevState => ({
       contacts: prevState.contacts.filter(({ id }) => id !== contactId),
     }));
@@ -68,13 +67,13 @@ class App extends Component {
 
   contactExists = currentName => {
     const { contacts } = this.state;
-
     return contacts.find(({ name }) => name === currentName) !== undefined;
   };
 
   render() {
     const { filter } = this.state;
     const visibleContacts = this.getVisibleContacts();
+
     return (
       <div className="Container">
         <h1 className="title">Phonebook</h1>
